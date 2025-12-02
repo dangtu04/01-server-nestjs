@@ -1,11 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { hashPasswordHelper } from '@/helpers/utils';
 import aqp from 'api-query-params';
+import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
 
 @Injectable()
 export class UsersService {
@@ -58,11 +63,40 @@ export class UsersService {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return updateUserDto;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid user id');
+    }
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      updateUserDto,
+      { new: true },
+    );
+    if (!updatedUser) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return {
+      message: 'Update user successfully!',
+    };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid user id');
+    }
+    const dateleUser = await this.userModel.findByIdAndDelete(id);
+    if (!dateleUser) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return {
+      message: 'Delete user successfully!',
+    };
+  }
+  async findByEmail(email: string) {
+    return await this.userModel.findOne({ email });
+  }
+
+  async handleRegister(registerDto: CreateAuthDto) {
+    return registerDto;
   }
 }
