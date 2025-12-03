@@ -21,9 +21,9 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
-    // if (user.isActive === false) {
-    //   throw new BadRequestException('Account not activated');
-    // }
+    if (user.isActive === false) {
+      throw new BadRequestException('Account not activated');
+    }
     return user;
   }
 }
