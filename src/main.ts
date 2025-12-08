@@ -18,6 +18,14 @@ async function bootstrap() {
     }),
   );
 
+  //config CORS
+  app.enableCors({
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    credentials: true,
+  });
+
   // set global prefix
   app.setGlobalPrefix('api/v1', { exclude: [''] });
 

@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '@/modules/users/users.service';
 import { comparePasswordHelper } from '@/helpers/utils';
 import { JwtService } from '@nestjs/jwt';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateAuthDto, VerifyAccountDto } from './dto/create-auth.dto';
 
 interface IUser {
   _id: string;
@@ -48,5 +48,9 @@ export class AuthService {
 
   async register(registerDto: CreateAuthDto) {
     return await this.usersService.handleRegister(registerDto);
+  }
+
+  async verifyAccount(verifyAccountDto: VerifyAccountDto) {
+    return await this.usersService.handleVerifyAccount(verifyAccountDto);
   }
 }

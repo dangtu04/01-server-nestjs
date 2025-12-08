@@ -6,6 +6,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '@/auth/auth.module';
 import { MailModule } from './mail/mail.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { TransformInterceptor } from '@/core/transform.interceptor';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,6 +27,12 @@ import { MailModule } from './mail/mail.module';
     MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
+    },
+  ],
 })
 export class AppModule {}

@@ -10,7 +10,7 @@ import { User } from './schemas/user.schema';
 import { Model, Types } from 'mongoose';
 import { hashPasswordHelper } from '@/helpers/utils';
 import aqp from 'api-query-params';
-import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import { CreateAuthDto, VerifyAccountDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -130,5 +130,31 @@ export class UsersService {
       },
     });
     return { _id: user._id };
+  }
+
+  // xác thực tài khoản
+  async handleVerifyAccount(verifyAccountDto: VerifyAccountDto) {
+    // tìm user theo _id và codeId
+    const user = await this.userModel.findOne({
+      _id: verifyAccountDto._id,
+      codeId: verifyAccountDto.code,
+    });
+    if (!user) {
+      throw new BadRequestException('The code is invalid or expired.');
+    }
+
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    // kiểm tra hạn code
+    if (isBeforeCheck) {
+      await this.userModel.updateOne(
+        { _id: verifyAccountDto._id },
+        {
+          isActive: true,
+        },
+      );
+      return isBeforeCheck;
+    } else {
+      throw new BadRequestException('The code is invalid or expired.');
+    }
   }
 }

@@ -10,7 +10,7 @@ import {
 import { AuthService } from './auth.service';
 import { Public } from '@/decorator/customize';
 import { LocalAuthGuard } from './passport/local-auth.guard';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { CreateAuthDto, VerifyAccountDto } from './dto/create-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -28,5 +28,11 @@ export class AuthController {
   @Public()
   register(@Body() registerDto: CreateAuthDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('verify-account')
+  @Public()
+  verifyAccount(@Body() verifyAccountDto: VerifyAccountDto) {
+    return this.authService.verifyAccount(verifyAccountDto);
   }
 }
