@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '@/modules/users/users.service';
 import { comparePasswordHelper } from '@/helpers/utils';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto, VerifyAccountDto } from './dto/create-auth.dto';
+import { ResetPasswordAuthDto } from './dto/update-auth.dto';
 
 interface IUser {
   _id: string;
@@ -22,6 +27,10 @@ export class AuthService {
     // Kiểm tra nếu user không tồn tại
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+    // User chưa kích hoạt
+    if (!user.isActive) {
+      throw new ForbiddenException('Tài khoản chưa được kích hoạt');
     }
 
     // Kiểm tra password
@@ -52,5 +61,17 @@ export class AuthService {
 
   async verifyAccount(verifyAccountDto: VerifyAccountDto) {
     return await this.usersService.handleVerifyAccount(verifyAccountDto);
+  }
+
+  async reactivate(email: string) {
+    return this.usersService.handleReactivate(email);
+  }
+
+  async forgotPassword(email: string) {
+    return this.usersService.handleForgotPassword(email);
+  }
+
+  async resetPassword(resetPasswordAuthDto: ResetPasswordAuthDto) {
+    return this.usersService.handleResetPassword(resetPasswordAuthDto);
   }
 }

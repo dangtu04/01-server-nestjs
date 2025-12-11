@@ -14,6 +14,7 @@ import { CreateAuthDto, VerifyAccountDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
+import { ResetPasswordAuthDto } from '@/auth/dto/update-auth.dto';
 
 @Injectable()
 export class UsersService {
@@ -132,6 +133,34 @@ export class UsersService {
     return { _id: user._id };
   }
 
+  async handleReactivate(email: string) {
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (user.isActive) {
+      throw new BadRequestException('Account has been activated');
+    }
+
+    const codeId = uuidv4();
+    await user.updateOne({
+      codeId: codeId,
+      codeExpired: dayjs().add(5, 'minute'),
+    });
+
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Testing Nest MailerModule ✔', // Subject line
+      template: 'reactivate.hbs',
+      context: {
+        name: user.name || user.email,
+        activationCode: codeId,
+      },
+    });
+    return { _id: user._id };
+  }
   // xác thực tài khoản
   async handleVerifyAccount(verifyAccountDto: VerifyAccountDto) {
     // tìm user theo _id và codeId
@@ -156,5 +185,65 @@ export class UsersService {
     } else {
       throw new BadRequestException('The code is invalid or expired.');
     }
+  }
+  async handleForgotPassword(email: string) {
+    // console.log(">>> email from FE: ", email);
+    // return
+
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const codeId = uuidv4();
+    await user.updateOne({
+      codeId: codeId,
+      codeExpired: dayjs().add(5, 'minute'),
+    });
+
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Testing Nest MailerModule ✔', // Subject line
+      template: 'register.hbs',
+      context: {
+        name: user.name || user.email,
+        activationCode: codeId,
+      },
+    });
+    return { _id: user._id, email: user.email };
+  }
+
+  async handleResetPassword(resetPasswordAuthDto: ResetPasswordAuthDto) {
+    const { email, password, confirmPassword, code } = resetPasswordAuthDto;
+
+    if (password !== confirmPassword) {
+      throw new BadRequestException(
+        'Password and confirm password are incorrect.',
+      );
+    }
+
+    const user = await this.userModel.findOne({ email });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (code !== user.codeId) {
+      throw new BadRequestException('The code is invalid');
+    }
+
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCheck) {
+      const newPassword = await hashPasswordHelper(password);
+
+      await user.updateOne({
+        password: newPassword,
+      });
+      return { isBeforeCheck };
+    } else {
+      throw new BadRequestException('The code is invalid or expired.');
+    }
+    // return { _id: user._id, email: user.email };
   }
 }

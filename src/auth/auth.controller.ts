@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { Public } from '@/decorator/customize';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { CreateAuthDto, VerifyAccountDto } from './dto/create-auth.dto';
+import { ResetPasswordAuthDto } from './dto/update-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -34,5 +35,23 @@ export class AuthController {
   @Public()
   verifyAccount(@Body() verifyAccountDto: VerifyAccountDto) {
     return this.authService.verifyAccount(verifyAccountDto);
+  }
+
+  @Post('reactivate')
+  @Public()
+  reactivate(@Body('email') email: string) {
+    return this.authService.reactivate(email);
+  }
+
+  @Post('forgot-password')
+  @Public()
+  forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  resetPassword(@Body() resetPasswordAuthDto: ResetPasswordAuthDto) {
+    return this.authService.resetPassword(resetPasswordAuthDto);
   }
 }
