@@ -57,13 +57,21 @@ export class UsersService {
     const totalPages = Math.ceil(totalItems / pageSize);
     const skip = (+current - 1) * +pageSize;
 
-    const result = await this.userModel
+    const results = await this.userModel
       .find(filter)
       .limit(pageSize)
       .skip(skip)
       .select('-password')
       .sort(sort as any);
-    return { result, totalPages };
+    return {
+      meta: {
+        current: current, // trang hiện tại
+        pageSize: pageSize, // số lượng bản ghi đã lấy
+        pages: totalPages, //tổng số trang với đk query
+        totals: totalItems, // tổng số bản ghi
+      },
+      results,
+    };
   }
 
   findOne(id: number) {
