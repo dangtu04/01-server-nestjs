@@ -1,17 +1,8 @@
+import { AccountType, UserRole } from '@/enum/user.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
-
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-}
-
-export enum AccountType {
-  LOCAL = 'LOCAL',
-  GOOGLE = 'GOOGLE',
-}
 
 @Schema({ timestamps: true })
 export class User {

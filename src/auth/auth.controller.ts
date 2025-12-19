@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from '@/decorator/customize';
-import { LocalAuthGuard } from './passport/local-auth.guard';
+import { LocalAuthGuard } from './guard/local-auth.guard';
 import { CreateAuthDto, VerifyAccountDto } from './dto/create-auth.dto';
 import { ResetPasswordAuthDto } from './dto/update-auth.dto';
 

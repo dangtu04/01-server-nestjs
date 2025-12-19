@@ -11,6 +11,8 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Roles } from '@/decorator/customize';
+import { UserRole } from '@/enum/user.enum';
 
 @Controller('users')
 export class UsersController {
@@ -22,6 +24,7 @@ export class UsersController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN)
   async findAll(
     @Query() query: string,
     @Query('current') current: string,
@@ -41,6 +44,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
