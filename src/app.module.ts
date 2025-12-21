@@ -8,12 +8,16 @@ import { AuthModule } from '@/auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformInterceptor } from '@/core/transform.interceptor';
+import { BrandsModule } from './modules/brands/brands.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     UsersModule,
+    BrandsModule,
+    CategoriesModule,
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

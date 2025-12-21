@@ -11,7 +11,7 @@ export class Brand {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   slug: string; // "nike", "adidas"
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isActive: boolean;
 }
 

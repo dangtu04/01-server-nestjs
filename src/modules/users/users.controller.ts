@@ -19,13 +19,14 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @Roles(UserRole.ADMIN)
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @Get()
   @Roles(UserRole.ADMIN)
-  async findAll(
+  findAll(
     @Query() query: string,
     @Query('current') current: string,
     @Query('pageSize') pageSize: string,
@@ -39,6 +40,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
