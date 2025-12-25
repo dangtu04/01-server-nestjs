@@ -128,4 +128,15 @@ export class BrandsService {
       message: 'Delete brand successfully!',
     };
   }
+
+  async getAllBrandsForSelect() {
+    const results = await this.brandModel
+      .find()
+      .select('_id name')
+      .lean()
+      .exec();
+    return {
+      results,
+    };
+  }
 }

@@ -8,8 +8,11 @@ import { AuthModule } from '@/auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformInterceptor } from '@/core/transform.interceptor';
-import { BrandsModule } from './modules/brands/brands.module';
-import { CategoriesModule } from './modules/categories/categories.module';
+import { BrandsModule } from '@/modules/brands/brands.module';
+import { CategoriesModule } from '@/modules/categories/categories.module';
+import { SizesModule } from '@/modules/sizes/sizes.module';
+import { CloudinaryModule } from '@/modules/cloudinary/cloudinary.module';
+import { ProductsModule } from '@/modules/products/products.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,6 +21,9 @@ import { CategoriesModule } from './modules/categories/categories.module';
     UsersModule,
     BrandsModule,
     CategoriesModule,
+    SizesModule,
+    CloudinaryModule,
+    ProductsModule,
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

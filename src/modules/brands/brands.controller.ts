@@ -25,6 +25,7 @@ export class BrandsController {
   }
 
   @Get()
+  @Roles(UserRole.ADMIN)
   findAll(
     @Query() query: string,
     @Query('current') current: string,
@@ -48,5 +49,11 @@ export class BrandsController {
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.brandsService.remove(id);
+  }
+
+  @Get('select/all')
+  @Roles(UserRole.ADMIN)
+  getAllBrandsForSelect() {
+    return this.brandsService.getAllBrandsForSelect();
   }
 }

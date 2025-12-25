@@ -11,12 +11,15 @@ import {
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { Roles } from '@/decorator/customize';
+import { UserRole } from '@/enum/user.enum';
 
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
+  @Roles(UserRole.ADMIN)
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
@@ -46,5 +49,11 @@ export class CategoriesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(id);
+  }
+
+  @Get('select/all')
+  @Roles(UserRole.ADMIN)
+  getAllCategoriesForSelect() {
+    return this.categoriesService.getAllCategoriesForSelect();
   }
 }

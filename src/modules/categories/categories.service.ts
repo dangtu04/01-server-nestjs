@@ -63,7 +63,9 @@ export class CategoriesService {
       .find(filter)
       .limit(pageSize)
       .skip(skip)
-      .sort(sort as any);
+      .sort(sort as any)
+      .populate('parentId', 'name')
+      .exec();
     return {
       meta: {
         current: current,
@@ -217,6 +219,17 @@ export class CategoriesService {
     }
     return {
       message: 'Delete category successfully!',
+    };
+  }
+
+  async getAllCategoriesForSelect() {
+    const results = await this.categoryModel
+      .find()
+      .select('_id name')
+      .lean()
+      .exec();
+    return {
+      results,
     };
   }
 }

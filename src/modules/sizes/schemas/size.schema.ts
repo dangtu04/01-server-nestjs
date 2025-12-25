@@ -14,7 +14,7 @@ export class Size {
   @Prop({ required: true, default: 0 })
   order: number; // Thứ tự hiển thị: 1, 2, 3...
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isActive: boolean;
 }
 

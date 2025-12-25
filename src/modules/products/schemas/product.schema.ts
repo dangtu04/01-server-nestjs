@@ -29,13 +29,10 @@ export class ProductVariant {
   @Prop({ required: true, trim: true })
   sizeName: string; // "Size M" - Denormalize
 
-  @Prop({ required: true, unique: true, uppercase: true, trim: true })
-  sku: string; // "ATUN-M-001"
-
   @Prop({ required: true, default: 0, min: 0 })
   quantity: number; // Số lượng tồn kho
 
-  @Prop({ default: true })
+  @Prop({ default: false })
   isAvailable: boolean; // Còn hàng hay không
 }
 
@@ -58,7 +55,7 @@ export class Product {
   @Prop({ required: true, min: 0 })
   price: number; // Giá chung cho tất cả size
 
-  @Prop({ type: ThumbnailSchema, required: true })
+  @Prop({ type: ThumbnailSchema, required: false, default: null })
   thumbnail: Thumbnail; // Ảnh đại diện
 
   @Prop({ type: [Types.ObjectId], ref: 'Category', default: [] })
@@ -75,6 +72,7 @@ export class Product {
 
   @Prop({
     enum: ['active', 'inactive', 'draft'],
+
     default: 'draft',
   })
   status: string; // Trạng thái sản phẩm
