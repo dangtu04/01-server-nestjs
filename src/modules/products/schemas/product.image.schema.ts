@@ -14,11 +14,11 @@ export class ProductImage {
   @Prop({ required: true, trim: true })
   secureUrl: string; // "https://res.cloudinary.com/..."
 
-  @Prop({ required: true, default: 1, min: 1 })
-  order: number; // Thứ tự hiển thị
+  // @Prop({ required: true, default: 1, min: 1 })
+  // order: number; // Thứ tự hiển thị
 
-  @Prop({ trim: true })
-  alt: string; // Text mô tả ảnh (SEO)
+  // @Prop({ trim: true })
+  // alt: string; // Text mô tả ảnh (SEO)
 }
 
 export const ProductImageSchema = SchemaFactory.createForClass(ProductImage);

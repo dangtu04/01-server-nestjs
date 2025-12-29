@@ -45,4 +45,10 @@ export class SizesController {
   remove(@Param('id') id: string) {
     return this.sizesService.remove(id);
   }
+
+  @Get('select/all')
+  @Roles(UserRole.ADMIN)
+  getAllSizesForSelect() {
+    return this.sizesService.getAllSizesForSelect();
+  }
 }

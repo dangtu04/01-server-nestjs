@@ -77,4 +77,15 @@ export class SizesService {
     }
     return { message: 'Delete size successfully!' };
   }
+
+  async getAllSizesForSelect() {
+    const results = await this.sizeModel
+      .find()
+      .select('_id name')
+      .lean()
+      .exec();
+    return {
+      results,
+    };
+  }
 }

@@ -39,14 +39,24 @@ export class CreateProductDto {
   @IsArray()
   @IsMongoId({ each: true })
   @IsNotEmpty()
-  categoryIds?: string[];
+  categoryIds: string[];
 
   @IsMongoId()
   @IsNotEmpty()
-  brandId?: string;
+  brandId: string;
 
   @IsOptional()
   material?: string;
 }
 
-// ==================== UPDATE PRODUCT DTO ====================
+// ==================== CREATE PRODUCT IMAGES DTO ====================
+
+export class ProductImageDto {
+  @IsMongoId()
+  @IsNotEmpty()
+  productId: string;
+  @IsNotEmpty()
+  publicId: string;
+  @IsNotEmpty()
+  secureUrl: string;
+}

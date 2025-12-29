@@ -13,12 +13,15 @@ import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import aqp from 'api-query-params';
 import { Types } from 'mongoose';
 import { Size } from '../sizes/schemas/size.schema';
+import { ProductImage } from './schemas/product.image.schema';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<Product>,
     @InjectModel(Size.name) private sizeModel: Model<Size>,
+    @InjectModel(ProductImage.name)
+    private productImageModel: Model<ProductImage>,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
@@ -271,6 +274,97 @@ export class ProductsService {
     return {
       message: 'Update variants successfully!',
       data: updatedProduct,
+    };
+  }
+
+  async bulkAddImages(id: string, files?: Express.Multer.File[]) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid product id');
+    }
+
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No images provided');
+    }
+
+    const images = await this.cloudinaryService.uploadMultipleImages(
+      files,
+      'details',
+    );
+
+    await Promise.all(
+      images.map((img) =>
+        this.productImageModel.create({
+          productId: id,
+          publicId: img.publicId,
+          secureUrl: img.secureUrl,
+        }),
+      ),
+    );
+    return {
+      message: 'Add images successfully!',
+    };
+  }
+  async findAllImages(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid product id');
+    }
+
+    const images = await this.productImageModel
+      .find({ productId: id })
+      .select('publicId secureUrl')
+      .exec();
+    return {
+      results: images,
+    };
+  }
+
+  async bulkUpdateImages(
+    id: string,
+    files?: Express.Multer.File[],
+    publicIdsToKeep?: string | string[],
+  ) {
+    // Validate product ID
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid product id');
+    }
+
+    // Lấy tất cả publicId cũ của product
+    const oldImages = await this.productImageModel
+      .find({ productId: id })
+      .select('publicId')
+      .exec();
+
+    const oldPublicIds = oldImages.map((img) => img.publicId);
+
+    // ép sang mảng
+    const keepIds: string[] = Array.isArray(publicIdsToKeep)
+      ? publicIdsToKeep
+      : publicIdsToKeep
+        ? [publicIdsToKeep]
+        : [];
+
+    // Gọi Cloudinary service
+    const updatedImages = await this.cloudinaryService.replaceMultipleImages(
+      oldPublicIds,
+      files ?? [],
+      keepIds,
+      'details',
+    );
+
+    // Xoá toàn bộ document ảnh cũ
+    await this.productImageModel.deleteMany({ productId: id });
+
+    // Insert lại ảnh (ảnh giữ + ảnh mới)
+    await this.productImageModel.insertMany(
+      updatedImages.map((img) => ({
+        productId: id,
+        publicId: img.publicId,
+        secureUrl: img.secureUrl,
+      })),
+    );
+
+    return {
+      message: 'Bulk update images successfully!',
     };
   }
 }

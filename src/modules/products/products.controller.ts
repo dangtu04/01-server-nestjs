@@ -10,13 +10,14 @@ import {
   UseInterceptors,
   Query,
   Put,
+  UploadedFiles,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto, UpdateVariantsDto } from './dto/update-product.dto';
 import { Roles } from '@/decorator/customize';
 import { UserRole } from '@/enum/user.enum';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('products')
 export class ProductsController {
@@ -67,5 +68,29 @@ export class ProductsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
+  }
+
+  @Post(':id/images-detail')
+  @UseInterceptors(FilesInterceptor('images'))
+  bulkAddImages(
+    @Param('id') id: string,
+    @UploadedFiles() files?: Express.Multer.File[],
+  ) {
+    return this.productsService.bulkAddImages(id, files);
+  }
+
+  @Get(':id/images-detail')
+  findAllImages(@Param('id') id: string) {
+    return this.productsService.findAllImages(id);
+  }
+
+  @Patch(':id/images-detail')
+  @UseInterceptors(FilesInterceptor('images'))
+  bulkUpdateImages(
+    @Param('id') id: string,
+    @UploadedFiles() files?: Express.Multer.File[],
+    @Body('publicIdsToKeep') publicIdsToKeep?: string[],
+  ) {
+    return this.productsService.bulkUpdateImages(id, files, publicIdsToKeep);
   }
 }
