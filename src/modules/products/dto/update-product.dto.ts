@@ -6,12 +6,17 @@ import {
   IsArray,
   IsMongoId,
   IsNumber,
+  IsOptional,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ProductStatus } from '@/enum/product.enum';
 
-export class UpdateProductDto extends PartialType(CreateProductDto) {}
+export class UpdateProductDto extends PartialType(CreateProductDto) {
+  @IsOptional()
+  status?: ProductStatus;
+}
 
 // ==================== VARIANT DTOs ====================
 export class VariantItemDto {

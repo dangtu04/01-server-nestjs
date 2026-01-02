@@ -14,6 +14,7 @@ import aqp from 'api-query-params';
 import { Types } from 'mongoose';
 import { Size } from '../sizes/schemas/size.schema';
 import { ProductImage } from './schemas/product.image.schema';
+import { ProductStatus } from '@/enum/product.enum';
 
 @Injectable()
 export class ProductsService {
@@ -43,7 +44,7 @@ export class ProductsService {
       ...createProductDto,
       slug,
       thumbnail,
-      status: 'draft',
+      status: ProductStatus.Draft,
       variants: [],
     });
 
@@ -304,6 +305,7 @@ export class ProductsService {
       message: 'Add images successfully!',
     };
   }
+
   async findAllImages(id: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid product id');
@@ -365,6 +367,45 @@ export class ProductsService {
 
     return {
       message: 'Bulk update images successfully!',
+    };
+  }
+
+  async findNewProducts(query: string, current: number, pageSize: number) {
+    const { filter } = aqp(query);
+
+    // xoá param phân trang khỏi filter
+    if (filter.current) delete filter.current;
+    if (filter.pageSize) delete filter.pageSize;
+
+    // chỉ lấy sản phẩm active
+    filter.status = ProductStatus.Active;
+
+    // default pagination
+    if (!current) current = 1;
+    if (!pageSize) pageSize = 10;
+
+    const totalItems = await this.productModel.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const skip = (current - 1) * pageSize;
+
+    const results = await this.productModel
+      .find(filter)
+      .select('_id name slug price thumbnail')
+      .sort({ createdAt: -1 })
+      .limit(pageSize)
+      .skip(skip)
+      // .populate('categoryIds', 'name')
+      // .populate('brandId', 'name')
+      .exec();
+
+    return {
+      meta: {
+        current,
+        pageSize,
+        pages: totalPages,
+        totals: totalItems,
+      },
+      results,
     };
   }
 }

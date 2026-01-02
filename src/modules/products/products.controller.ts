@@ -15,7 +15,7 @@ import {
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto, UpdateVariantsDto } from './dto/update-product.dto';
-import { Roles } from '@/decorator/customize';
+import { Public, Roles } from '@/decorator/customize';
 import { UserRole } from '@/enum/user.enum';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
@@ -43,11 +43,13 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @Roles(UserRole.ADMIN)
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN)
   @UseInterceptors(FileInterceptor('thumbnail'))
   update(
     @Param('id') id: string,
@@ -58,6 +60,7 @@ export class ProductsController {
   }
 
   @Put(':id/variants')
+  @Roles(UserRole.ADMIN)
   async updateVariants(
     @Param('id') id: string,
     @Body() updateVariantsDto: UpdateVariantsDto,
@@ -66,11 +69,13 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.productsService.remove(id);
   }
 
   @Post(':id/images-detail')
+  @Roles(UserRole.ADMIN)
   @UseInterceptors(FilesInterceptor('images'))
   bulkAddImages(
     @Param('id') id: string,
@@ -85,6 +90,7 @@ export class ProductsController {
   }
 
   @Patch(':id/images-detail')
+  @Roles(UserRole.ADMIN)
   @UseInterceptors(FilesInterceptor('images'))
   bulkUpdateImages(
     @Param('id') id: string,
@@ -92,5 +98,15 @@ export class ProductsController {
     @Body('publicIdsToKeep') publicIdsToKeep?: string[],
   ) {
     return this.productsService.bulkUpdateImages(id, files, publicIdsToKeep);
+  }
+
+  @Get('list/new')
+  @Public()
+  findNewProducts(
+    @Query() query: string,
+    @Query('current') current: string,
+    @Query('pageSize') pageSize: string,
+  ) {
+    return this.productsService.findNewProducts(query, +current, +pageSize);
   }
 }

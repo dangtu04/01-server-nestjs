@@ -1,3 +1,4 @@
+import { ProductStatus } from '@/enum/product.enum';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
@@ -71,11 +72,11 @@ export class Product {
   variants: ProductVariant[]; // Tồn kho theo size
 
   @Prop({
-    enum: ['active', 'inactive', 'draft'],
-
-    default: 'draft',
+    type: String,
+    enum: Object.values(ProductStatus),
+    default: ProductStatus.Draft,
   })
-  status: string; // Trạng thái sản phẩm
+  status: ProductStatus;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
