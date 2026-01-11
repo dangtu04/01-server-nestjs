@@ -80,12 +80,3 @@ export class Product {
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
-
-// Indexes
-// ProductSchema.index({ slug: 1 });
-// ProductSchema.index({ categoryIds: 1 });
-// ProductSchema.index({ brandId: 1 });
-// ProductSchema.index({ status: 1 });
-// ProductSchema.index({ 'variants.sku': 1 }); // Query theo SKU
-// ProductSchema.index({ 'variants.sizeCode': 1 }); // Query theo size
-// ProductSchema.index({ price: 1 }); // Sort theo giá

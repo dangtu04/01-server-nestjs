@@ -85,6 +85,7 @@ export class ProductsController {
   }
 
   @Get(':id/images-detail')
+  @Public()
   findAllImages(@Param('id') id: string) {
     return this.productsService.findAllImages(id);
   }
@@ -108,5 +109,11 @@ export class ProductsController {
     @Query('pageSize') pageSize: string,
   ) {
     return this.productsService.findNewProducts(query, +current, +pageSize);
+  }
+
+  @Get('detail/:slug')
+  @Public()
+  getProductDetail(@Param('slug') slug: string) {
+    return this.productsService.getProductDetail(slug);
   }
 }

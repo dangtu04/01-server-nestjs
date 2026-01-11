@@ -408,4 +408,33 @@ export class ProductsService {
       results,
     };
   }
+
+  async getProductDetail(slug: string) {
+    const product = await this.productModel
+      .findOne({ slug, status: ProductStatus.Active })
+      .select('-createdAt -updatedAt -__v')
+      .populate('categoryIds', 'name')
+      .populate('brandId', 'name')
+      .lean()
+      .exec();
+
+    if (!product) {
+      throw new NotFoundException(
+        `Product with slug ${slug} not found or not active`,
+      );
+    }
+
+    let images: string[] = [];
+    try {
+      const imagesResult = await this.findAllImages(product._id.toString());
+      images = imagesResult?.results?.map((img) => img.secureUrl) || [];
+    } catch (error) {
+      images = [];
+    }
+
+    return {
+      product,
+      images,
+    };
+  }
 }

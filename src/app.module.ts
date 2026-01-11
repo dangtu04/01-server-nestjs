@@ -13,6 +13,7 @@ import { CategoriesModule } from '@/modules/categories/categories.module';
 import { SizesModule } from '@/modules/sizes/sizes.module';
 import { CloudinaryModule } from '@/modules/cloudinary/cloudinary.module';
 import { ProductsModule } from '@/modules/products/products.module';
+import { CartsModule } from './modules/carts/carts.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +25,7 @@ import { ProductsModule } from '@/modules/products/products.module';
     SizesModule,
     CloudinaryModule,
     ProductsModule,
+    CartsModule,
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
