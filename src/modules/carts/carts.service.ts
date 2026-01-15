@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateCartDto } from './dto/create-cart.dto';
@@ -11,6 +12,7 @@ import { User } from '../users/schemas/user.schema';
 import { Cart } from './schemas/cart.schema';
 import { CartLimits } from '@/enum/cart.enum.';
 import { ProductStatus } from '@/enum/product.enum';
+import { UpdateCartItemDto } from './dto/update-cart.dto';
 
 @Injectable()
 export class CartsService {
@@ -19,8 +21,8 @@ export class CartsService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Product.name) private productModel: Model<Product>,
   ) {}
-  async addToCart(dto: CreateCartDto) {
-    const { userId, productId, sizeId } = dto;
+  async addToCart(userId: string, dto: CreateCartDto) {
+    const { productId, sizeId } = dto;
     const quantity = Number(dto.quantity);
     // validate dto
     if (
@@ -120,11 +122,11 @@ export class CartsService {
       .findOne({ userId })
       .populate({
         path: 'items.productId',
-        select: 'name price thumbnail.secureUrl',
+        select: 'name price thumbnail status variants',
       })
       .populate({
         path: 'items.sizeId',
-        select: 'name',
+        select: 'name code',
       })
       .lean();
 
@@ -141,11 +143,44 @@ export class CartsService {
       };
     }
 
+    // enrich items với thông tin variant
+    const enrichedItems = cart.items.map((item: any) => {
+      const product = item.productId;
+      const size = item.sizeId;
+
+      // tìm variant khớp với sizeId
+      const variant = product?.variants?.find(
+        (v: any) => v.sizeId.toString() === size?._id.toString(),
+      );
+
+      return {
+        _id: item._id,
+        productId: {
+          _id: product?._id,
+          name: product?.name,
+          price: product?.price,
+          thumbnail: product?.thumbnail,
+          status: product?.status,
+        },
+        sizeId: {
+          _id: size?._id,
+          name: size?.name,
+          code: size?.code,
+        },
+        quantity: item.quantity,
+        // thông tin variant
+        variant: {
+          isAvailable: variant?.isAvailable ?? false,
+          stock: variant?.quantity ?? 0,
+        },
+      };
+    });
+
     // tính toán pagination
-    const totalItems = cart.items.length;
-    const totalPages = Math.ceil(+totalItems / pageSize);
+    const totalItems = enrichedItems.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
     const skip = (current - 1) * pageSize;
-    const pagedItems = cart.items.slice(skip, skip + pageSize);
+    const pagedItems = enrichedItems.slice(skip, skip + pageSize);
 
     return {
       meta: {
@@ -156,5 +191,146 @@ export class CartsService {
       },
       results: pagedItems,
     };
+  }
+
+  async updateCartItem(userId: string, dto: UpdateCartItemDto) {
+    const { id, newQuantity } = dto;
+
+    // Validate newQuantity
+    if (newQuantity < 1 || newQuantity > CartLimits.MAX_QUANTITY_PER_ITEM) {
+      throw new BadRequestException(
+        `Số lượng phải từ 1 đến ${CartLimits.MAX_QUANTITY_PER_ITEM}`,
+      );
+    }
+
+    // Validate userId và id
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Id không hợp lệ');
+    }
+
+    // Tìm cart và populate product để lấy variants
+    const cart = await this.cartModel
+      .findOne({ userId })
+      .populate({
+        path: 'items.productId',
+        select: 'status variants',
+      })
+      .lean();
+
+    if (!cart) {
+      throw new NotFoundException('Không tìm thấy giỏ hàng');
+    }
+
+    // Tìm cart item cần update
+    const item = cart.items.find((i: any) => i._id.toString() === id);
+    // console.log('>>>>> item: ', item);
+    if (!item) {
+      throw new NotFoundException('Không tìm thấy sản phẩm trong giỏ hàng');
+    }
+
+    // Type casting để access được properties
+    const product = item.productId as any;
+
+    // Check product status
+    if (product.status !== ProductStatus.Active) {
+      throw new BadRequestException('Sản phẩm không còn khả dụng');
+    }
+
+    // Tìm variant tương ứng với sizeId của item
+    const variant = product.variants.find(
+      (v: any) => v.sizeId.toString() === item.sizeId.toString(),
+    );
+    // console.log('>>>> variant: ', variant);
+    if (!variant) {
+      throw new BadRequestException('Kích thước không còn tồn tại');
+    }
+
+    // Check variant availability
+    if (!variant.isAvailable) {
+      throw new BadRequestException('Kích thước này hiện không khả dụng');
+    }
+
+    // Check stock - Đây là phần quan trọng
+    if (newQuantity > variant.quantity) {
+      throw new BadRequestException(
+        `Số lượng vượt quá tồn kho. Chỉ còn ${variant.quantity} sản phẩm`,
+      );
+    }
+
+    // Cập nhật quantity trong database
+    const updatedCart = await this.cartModel.findOneAndUpdate(
+      {
+        userId: userId,
+        'items._id': new Types.ObjectId(id),
+      },
+      {
+        $set: {
+          'items.$.quantity': newQuantity,
+        },
+      },
+      // { new: true },
+    );
+
+    if (!updatedCart) {
+      throw new BadRequestException('Cập nhật giỏ hàng thất bại');
+    }
+
+    return {
+      message: 'Cập nhật số lượng thành công',
+      // updatedItem: {
+      //   id,
+      //   newQuantity,
+      //   maxStock: variant.quantity,
+      // },
+    };
+  }
+
+  async deleteCartItem(userId: string, id: string) {
+    // validate định dạng ObjectId trước khi query
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(
+        'Định dạng Id người dùng hoặc sản phẩm không hợp lệ',
+      );
+    }
+
+    try {
+      const res = await this.cartModel.findOneAndUpdate(
+        {
+          userId: userId,
+          'items._id': new Types.ObjectId(id),
+        },
+        {
+          $pull: {
+            items: { _id: new Types.ObjectId(id) },
+          },
+        },
+        // { new: true },
+      );
+
+      if (!res) {
+        throw new NotFoundException(
+          'Không tìm thấy sản phẩm trong giỏ hàng để xóa',
+        );
+      }
+
+      return {
+        statusCode: 200,
+        message: 'Xoá sản phẩm khỏi giỏ hàng thành công',
+        // data: res,
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      console.error('Lỗi deleteCartItem:', error);
+
+      // Trả về lỗi server chung cho client
+      throw new InternalServerErrorException(
+        'Đã có lỗi xảy ra trong quá trình xử lý',
+      );
+    }
   }
 }
