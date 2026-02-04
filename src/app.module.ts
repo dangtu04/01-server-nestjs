@@ -14,6 +14,7 @@ import { SizesModule } from '@/modules/sizes/sizes.module';
 import { CloudinaryModule } from '@/modules/cloudinary/cloudinary.module';
 import { ProductsModule } from '@/modules/products/products.module';
 import { CartsModule } from './modules/carts/carts.module';
+import { OrdersModule } from './orders/orders.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -37,6 +38,7 @@ import { CartsModule } from './modules/carts/carts.module';
 
     AuthModule,
     MailModule,
+    OrdersModule,
   ],
   controllers: [AppController],
   providers: [

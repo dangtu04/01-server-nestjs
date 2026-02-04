@@ -36,6 +36,7 @@ export class CartsController {
     @Query('pageSize') pageSize: string,
     @Request() req,
   ) {
+    // console.log('>>>> check call api get cart');
     const userId = req.user._id;
     return this.cartsService.getCartByUserId(userId, +current, +pageSize);
   }
@@ -44,6 +45,7 @@ export class CartsController {
   @Roles(UserRole.ADMIN, UserRole.USER)
   updateCartItem(@Request() req, @Body() dto: UpdateCartItemDto) {
     const userId = req.user._id;
+    // console.log('>>>> check call api', dto);
     return this.cartsService.updateCartItem(userId, dto);
   }
 

@@ -12,8 +12,7 @@ export class CartItem {
   productId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Size', required: true })
-  sizeId: Types.ObjectId; // ← CHỈ CÓ ID
-  // Số lượng - Giới hạn tối đa 30
+  sizeId: Types.ObjectId;
   @Prop({ required: true, min: 1, max: 30, default: 1 })
   quantity: number;
 }

@@ -140,6 +140,7 @@ export class CartsService {
           totals: 0,
         },
         results: [],
+        totalPrice: 0,
       };
     }
 
@@ -173,8 +174,16 @@ export class CartsService {
           isAvailable: variant?.isAvailable ?? false,
           stock: variant?.quantity ?? 0,
         },
+
+        subtotal: (product?.price ?? 0) * item.quantity,
       };
     });
+
+    //tổng tiền toàn bộ giỏ hàng
+    const totalPrice = enrichedItems.reduce(
+      (sum, item) => sum + item.subtotal,
+      0,
+    );
 
     // tính toán pagination
     const totalItems = enrichedItems.length;
@@ -190,25 +199,26 @@ export class CartsService {
         totals: totalItems,
       },
       results: pagedItems,
+      totalPrice,
     };
   }
 
   async updateCartItem(userId: string, dto: UpdateCartItemDto) {
     const { id, newQuantity } = dto;
 
-    // Validate newQuantity
+    // validate newQuantity
     if (newQuantity < 1 || newQuantity > CartLimits.MAX_QUANTITY_PER_ITEM) {
       throw new BadRequestException(
         `Số lượng phải từ 1 đến ${CartLimits.MAX_QUANTITY_PER_ITEM}`,
       );
     }
 
-    // Validate userId và id
+    // validate userId và id
     if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Id không hợp lệ');
     }
 
-    // Tìm cart và populate product để lấy variants
+    // tìm cart và populate product để lấy variants
     const cart = await this.cartModel
       .findOne({ userId })
       .populate({
@@ -221,7 +231,7 @@ export class CartsService {
       throw new NotFoundException('Không tìm thấy giỏ hàng');
     }
 
-    // Tìm cart item cần update
+    // tìm cart item cần update
     const item = cart.items.find((i: any) => i._id.toString() === id);
     // console.log('>>>>> item: ', item);
     if (!item) {
@@ -231,12 +241,12 @@ export class CartsService {
     // Type casting để access được properties
     const product = item.productId as any;
 
-    // Check product status
+    // check product status
     if (product.status !== ProductStatus.Active) {
       throw new BadRequestException('Sản phẩm không còn khả dụng');
     }
 
-    // Tìm variant tương ứng với sizeId của item
+    // tìm variant tương ứng với sizeId của item
     const variant = product.variants.find(
       (v: any) => v.sizeId.toString() === item.sizeId.toString(),
     );
@@ -245,19 +255,19 @@ export class CartsService {
       throw new BadRequestException('Kích thước không còn tồn tại');
     }
 
-    // Check variant availability
+    // check variant availability
     if (!variant.isAvailable) {
       throw new BadRequestException('Kích thước này hiện không khả dụng');
     }
 
-    // Check stock - Đây là phần quan trọng
+    // check stock
     if (newQuantity > variant.quantity) {
       throw new BadRequestException(
         `Số lượng vượt quá tồn kho. Chỉ còn ${variant.quantity} sản phẩm`,
       );
     }
 
-    // Cập nhật quantity trong database
+    // update quantity trong database
     const updatedCart = await this.cartModel.findOneAndUpdate(
       {
         userId: userId,
@@ -327,7 +337,7 @@ export class CartsService {
       }
       console.error('Lỗi deleteCartItem:', error);
 
-      // Trả về lỗi server chung cho client
+      // trả về lỗi chung
       throw new InternalServerErrorException(
         'Đã có lỗi xảy ra trong quá trình xử lý',
       );

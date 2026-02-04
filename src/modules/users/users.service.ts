@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto, UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model, Types } from 'mongoose';
@@ -46,6 +46,10 @@ export class UsersService {
     return { _id: user._id };
   }
 
+  findOne(id: number) {
+    return `This action returns a #${id} user`;
+  }
+
   async findAll(query: string, current: number, pageSize: number) {
     const { filter, sort } = aqp(query);
     if (filter.current) delete filter.current;
@@ -74,8 +78,17 @@ export class UsersService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOneById(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid user id');
+    }
+    const user = await this.userModel
+      .findById(id)
+      .select('_id name email phone address');
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return user;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -253,5 +266,18 @@ export class UsersService {
       throw new BadRequestException('The code is invalid or expired.');
     }
     // return { _id: user._id, email: user.email };
+  }
+
+  async updateProfile(id: string, dto: UpdateProfileDto) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid user id');
+    }
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .select('-password');
+    if (!updatedUser) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return updatedUser;
   }
 }

@@ -4,6 +4,26 @@ import { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
+// Sub-schema cho địa chỉ
+@Schema({ _id: false })
+export class Address {
+  @Prop({ required: true })
+  provinceCode: number;
+
+  @Prop({ required: true, trim: true })
+  provinceName: string;
+
+  @Prop({ required: true })
+  wardCode: number;
+
+  @Prop({ required: true, trim: true })
+  wardName: string;
+
+  @Prop({ trim: true })
+  detail?: string;
+}
+
+export const AddressSchema = SchemaFactory.createForClass(Address);
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true, trim: true })
@@ -24,8 +44,8 @@ export class User {
   @Prop({ trim: true })
   phone?: string;
 
-  @Prop({ trim: true })
-  address?: string;
+  @Prop({ type: AddressSchema, default: null })
+  address?: Address;
 
   @Prop({
     default: null,

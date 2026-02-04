@@ -7,12 +7,15 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto, UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '@/decorator/customize';
 import { UserRole } from '@/enum/user.enum';
+import { JwtAuthGuard } from '@/auth/guard/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
@@ -49,5 +52,21 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
+  }
+
+  @Get('profile/me')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  getProfile(@Request() req) {
+    const userId = req.user._id;
+    return this.usersService.findOneById(userId);
+  }
+
+  @Patch('profile/me')
+  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  updateProfile(@Request() req, @Body() dto: UpdateProfileDto) {
+    const userId = req.user._id;
+    return this.usersService.updateProfile(userId, dto);
   }
 }
