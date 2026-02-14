@@ -14,4 +14,7 @@ export class DeliveryInfoDto {
   @ValidateNested()
   @Type(() => DeliveryAddressDto)
   address: DeliveryAddressDto;
+
+  @IsString()
+  note?: string;
 }

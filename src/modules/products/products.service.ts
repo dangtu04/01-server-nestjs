@@ -211,35 +211,35 @@ export class ProductsService {
   //   };
   // }
   async updateVariants(id: string, updateVariantsDto: UpdateVariantsDto) {
-    // 1. Validate product ID
+    // validate product ID
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid product id');
     }
 
-    // 2. Kiểm tra product tồn tại
+    // kiểm tra product tồn tại
     const product = await this.productModel.findById(id);
     if (!product) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
 
-    // 3. Lấy tất cả sizeIds từ request
+    // lấy tất cả sizeIds từ request
     const sizeIds = updateVariantsDto.variants.map((v) => v.sizeId);
 
-    // 4. Validate tất cả sizeIds hợp lệ
+    // validate tất cả sizeIds hợp lệ
     const validSizeIds = sizeIds.filter((id) => Types.ObjectId.isValid(id));
     if (validSizeIds.length !== sizeIds.length) {
       throw new BadRequestException('One or more sizeIds are invalid');
     }
 
-    // 5. Query tất cả sizes từ database
+    // query tất cả sizes từ database
     const sizes = await this.sizeModel
       .find({
         _id: { $in: sizeIds },
-        isActive: true, // Chỉ cho phép sizes đang active
+        isActive: true, // chỉ cho phép sizes đang active
       })
       .exec();
 
-    // 6. Kiểm tra xem tất cả sizes có tồn tại không
+    // kiểm tra xem tất cả sizes có tồn tại không
     if (sizes.length !== sizeIds.length) {
       const foundSizeIds = sizes.map((s) => s._id.toString());
       const missingSizeIds = sizeIds.filter((id) => !foundSizeIds.includes(id));
@@ -248,10 +248,10 @@ export class ProductsService {
       );
     }
 
-    // 7. Tạo Map để lookup nhanh
+    // tạo Map để lookup nhanh
     const sizeMap = new Map(sizes.map((s) => [s._id.toString(), s]));
 
-    // 8. Build variants với đầy đủ thông tin
+    // build variants với đầy đủ thông tin
     const variants = updateVariantsDto.variants.map((v) => {
       const size = sizeMap.get(v.sizeId);
 
@@ -264,12 +264,12 @@ export class ProductsService {
       };
     });
 
-    // 9. Update product
+    // update product
     await this.productModel
       .updateOne({ _id: id }, { $set: { variants } })
       .exec();
 
-    // 10. Lấy product mới để trả về
+    // lấy product mới để trả về
     const updatedProduct = await this.productModel.findById(id).exec();
 
     return {

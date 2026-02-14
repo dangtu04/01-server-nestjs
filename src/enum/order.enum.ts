@@ -20,3 +20,9 @@ export enum PaymentStatus {
   FAILED = 'FAILED',
   REFUNDED = 'REFUNDED',
 }
+
+export enum ShippingConfig {
+  DEFAULT_FEE = 30000,
+  FREE_SHIPPING_THRESHOLD = 500000,
+  // EXPRESS_SURCHARGE: 20000,
+}

@@ -6,6 +6,7 @@ import { PaymentMethod } from '@/enum/order.enum';
 export class CreateOrderDto {
   @ValidateNested()
   @Type(() => DeliveryInfoDto)
+  @IsNotEmpty()
   delivery: DeliveryInfoDto;
 
   @IsEnum(PaymentMethod)
