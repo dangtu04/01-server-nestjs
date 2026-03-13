@@ -12,12 +12,14 @@ import { Product } from '@/modules/products/schemas/product.schema';
 import { Size } from '@/modules/sizes/schemas/size.schema';
 import { OrderItem } from './schemas/order.item.schema';
 import {
+  OrderStatus,
   PaymentMethod,
   PaymentStatus,
   ShippingConfig,
 } from '@/enum/order.enum';
 import { Order } from './schemas/order.schema';
 import { CartsService } from '@/modules/carts/carts.service';
+import aqp from 'api-query-params';
 
 @Injectable()
 export class OrdersService {
@@ -95,7 +97,7 @@ export class OrdersService {
         cart.items.map(async (item) => {
           const product = await this.productModel
             .findById(item.productId)
-            .select('name slug price');
+            .select('name slug price thumbnail');
           const size = await this.sizeModel
             .findById(item.sizeId)
             .select('code name');
@@ -109,6 +111,7 @@ export class OrdersService {
             sizeName: size.name,
             quantity: item.quantity,
             totalPrice: product.price * item.quantity,
+            thumbnail: product.thumbnail?.secureUrl || null,
           };
         }),
       );
@@ -176,5 +179,60 @@ export class OrdersService {
       true, // shouldClearCart
     );
     return order.items.map((i) => i.productSlug);
+  }
+
+  async gettAllOrders(query: string, current: number, pageSize: number) {
+    const { filter, sort } = aqp(query);
+    if (filter.current) delete filter.current;
+    if (filter.pageSize) delete filter.pageSize;
+    if (!current) current = 1;
+    if (!pageSize) pageSize = 10;
+
+    const totalItems = await this.orderModel.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const skip = (+current - 1) * +pageSize;
+
+    const results = await this.orderModel
+      .find(filter)
+      .limit(pageSize)
+      .skip(skip)
+      .select('-items')
+      .sort(sort as any);
+    return {
+      meta: {
+        current: current, // trang hiện tại
+        pageSize: pageSize, // số lượng bản ghi đã lấy
+        pages: totalPages, //tổng số trang với đk query
+        totals: totalItems, // tổng số bản ghi
+      },
+      results,
+    };
+  }
+
+  async getOrder(id: string) {
+    const order = await this.orderModel.findById(id);
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+    return order;
+  }
+
+  async updateOrderStatus(id: string, status: OrderStatus) {
+    const order = await this.orderModel.findById(id);
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+
+    order.status = status;
+
+    // nêu đơn hoàn thành thì đánh dấu đã thanh toán
+    if (status === OrderStatus.COMPLETED && order.payment) {
+      order.payment.status = PaymentStatus.PAID;
+    }
+
+    await order.save();
+
+    return order;
   }
 }

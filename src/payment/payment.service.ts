@@ -170,7 +170,6 @@ export class PaymentService {
   async handleReturnUrl(query: VNPayReturnDto) {
     const { vnp_SecureHash, ...rest } = query;
 
-    console.log('>>>>> check call return url, query: ', query);
     // verify chữ ký
     const sortedParams = this.sortObject(rest);
     const signData = new URLSearchParams(sortedParams).toString();
@@ -182,12 +181,13 @@ export class PaymentService {
       return { success: false, message: 'Chữ ký không hợp lệ' };
     }
 
+    // Dùng nhất quán một field để tìm order
     const order = await this.orderModel.findById(query.vnp_TxnRef);
     if (!order) {
       return { success: false, message: 'Không tìm thấy đơn hàng' };
     }
 
-    // chờ IPN cập nhật trạng thái
+    // Retry chờ IPN cập nhật
     let currentOrder = order;
     let retries = 0;
     const MAX_RETRIES = 3;
@@ -198,16 +198,18 @@ export class PaymentService {
       retries < MAX_RETRIES
     ) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-      currentOrder = await this.orderModel.findOne({
-        orderCode: query.vnp_TxnRef,
-      });
+
+      // Fix bug 1: dùng cùng field _id như ban đầu
+      const updated = await this.orderModel.findById(query.vnp_TxnRef);
+      if (updated) currentOrder = updated; // Fix: guard null trước khi gán
       retries++;
     }
 
+    // Fix bug 2: return currentOrder thay vì order cũ
     return {
-      success: order.payment.status === PaymentStatus.PAID,
-      orderId: order._id,
-      status: order.payment.status, // trạng thái thanh toán
+      success: currentOrder.payment.status === PaymentStatus.PAID,
+      orderId: currentOrder._id,
+      status: currentOrder.payment.status,
     };
   }
 }

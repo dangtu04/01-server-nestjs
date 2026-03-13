@@ -1,11 +1,11 @@
 export enum OrderStatus {
-  PENDING = 'PENDING', // vừa tạo, chưa thanh toán
-  PAID = 'PAID', // đã thanh toán
-  PROCESSING = 'PROCESSING', // shop đang xử lý
-  SHIPPING = 'SHIPPING', // đang giao
-  COMPLETED = 'COMPLETED', // giao thành công
+  PENDING = 'PENDING', // vừa đặt hàng, chờ admin xác nhận
+  CONFIRMED = 'CONFIRMED', // admin đã xác nhận đơn
+  PROCESSING = 'PROCESSING', // shop đang đóng gói/xử lý
+  SHIPPING = 'SHIPPING', // đang giao cho shipper
+  COMPLETED = 'COMPLETED', // giao thành công, COD đã thu tiền
   CANCELLED = 'CANCELLED', // user/admin huỷ
-  REFUNDED = 'REFUNDED', // hoàn tiền
+  REFUNDED = 'REFUNDED', // hoàn tiền (nếu đã thu rồi mới huỷ)
 }
 
 export enum PaymentMethod {

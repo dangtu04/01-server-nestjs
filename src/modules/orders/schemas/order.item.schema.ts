@@ -30,6 +30,9 @@ export class OrderItem {
 
   @Prop({ required: true })
   totalPrice: number; // price * quantity
+
+  @Prop({ required: false, default: null })
+  thumbnail: string; // secureUrl của ảnh sản phẩm
 }
 
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
