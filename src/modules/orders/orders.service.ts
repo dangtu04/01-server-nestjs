@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { ClientSession, Connection, Model, Types } from 'mongoose';
+import mongoose, { ClientSession, Connection, Model, Types } from 'mongoose';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { User } from '@/modules/users/schemas/user.schema';
 import { Cart } from '@/modules/carts/schemas/cart.schema';
@@ -185,8 +185,8 @@ export class OrdersService {
     const { filter, sort } = aqp(query);
     if (filter.current) delete filter.current;
     if (filter.pageSize) delete filter.pageSize;
-    if (!current) current = 1;
-    if (!pageSize) pageSize = 10;
+    if (!current || current < 1) current = 1;
+    if (!pageSize || pageSize > 100) pageSize = 10;
 
     const totalItems = await this.orderModel.countDocuments(filter);
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -198,6 +198,49 @@ export class OrdersService {
       .skip(skip)
       .select('-items')
       .sort(sort as any);
+    return {
+      meta: {
+        current: current, // trang hiện tại
+        pageSize: pageSize, // số lượng bản ghi đã lấy
+        pages: totalPages, //tổng số trang với đk query
+        totals: totalItems, // tổng số bản ghi
+      },
+      results,
+    };
+  }
+
+  async getOrderByUserId(
+    userId: string,
+    query: string,
+    current: number,
+    pageSize: number,
+  ) {
+    const user = await this.userModel.findById(userId).select('_id');
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    const { filter, sort } = aqp(query);
+    if (filter.current) delete filter.current;
+    if (filter.pageSize) delete filter.pageSize;
+    if (!current || current < 1) current = 1;
+    if (!pageSize || pageSize > 100) pageSize = 10;
+
+    const finalFilter = {
+      ...filter,
+      userId: user._id,
+    };
+    const totalItems = await this.orderModel.countDocuments(finalFilter);
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const skip = (+current - 1) * +pageSize;
+
+    const results = await this.orderModel
+      .find(finalFilter)
+      .limit(pageSize)
+      .skip(skip)
+      .select('-items') // không lấy items
+      .sort(sort as any);
+
     return {
       meta: {
         current: current, // trang hiện tại
@@ -232,6 +275,25 @@ export class OrdersService {
     }
 
     await order.save();
+
+    return order;
+  }
+
+  async getOrderByIdAndUserId(id: string, userId: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+    const orderId = new mongoose.Types.ObjectId(id);
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+
+    const order = await this.orderModel.findOne({
+      _id: orderId,
+      userId: userIdObj,
+    });
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
 
     return order;
   }

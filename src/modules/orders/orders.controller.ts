@@ -42,10 +42,37 @@ export class OrdersController {
     return this.ordersService.gettAllOrders(query, +current, +pageSize);
   }
 
+  // get order theo userId, đặt trươc phần get theo _id của order
+  @Get('user')
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  getOrderByUserId(
+    @Request() req,
+    @Query() query: string,
+    @Query('current') current: string,
+    @Query('pageSize') pageSize: string,
+  ) {
+    const userId = req.user._id;
+    return this.ordersService.getOrderByUserId(
+      userId,
+      query,
+      +current,
+      +pageSize,
+    );
+  }
+
+  // get order theo _id của order
   @Get(':id')
   @Roles(UserRole.ADMIN)
   getOrder(@Param('id') id: string) {
     return this.ordersService.getOrder(id);
+  }
+
+  // get order theo _id của order và userId
+  @Get('order-id/:id')
+  @Roles(UserRole.ADMIN, UserRole.USER)
+  getOrderByIdAndUserId(@Param('id') id: string, @Request() req) {
+    const userId = req.user._id;
+    return this.ordersService.getOrderByIdAndUserId(id, userId);
   }
 
   @Patch('status/:id')
