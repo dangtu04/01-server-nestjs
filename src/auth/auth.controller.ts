@@ -31,6 +31,13 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('login/google')
+  handleLoginGoogle(@Body('id_token') id_token: string) {
+    return this.authService.loginGoogle(id_token);
+  }
+
   @Post('verify-account')
   @Public()
   verifyAccount(@Body() verifyAccountDto: VerifyAccountDto) {

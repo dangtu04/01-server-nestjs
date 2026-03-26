@@ -8,6 +8,8 @@ import { comparePasswordHelper } from '@/helpers/utils';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto, VerifyAccountDto } from './dto/create-auth.dto';
 import { ResetPasswordAuthDto } from './dto/update-auth.dto';
+import { OAuth2Client } from 'google-auth-library';
+import { ConfigService } from '@nestjs/config';
 
 interface IUser {
   _id: string;
@@ -20,6 +22,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -45,6 +48,50 @@ export class AuthService {
   }
 
   async login(user: IUser) {
+    const payload = { email: user.email, _id: user._id, role: user.role };
+    return {
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      access_token: this.jwtService.sign(payload),
+    };
+  }
+
+  async verifyGoogleToken(idToken: string) {
+    const client = new OAuth2Client(
+      this.configService.get<string>('AUTH_GOOGLE_ID'),
+    );
+
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: this.configService.get<string>('AUTH_GOOGLE_ID'),
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    if (!payload.email_verified) {
+      throw new UnauthorizedException('Email chưa verify');
+    }
+
+    return {
+      email: payload.email,
+      googleId: payload.sub,
+      name: payload.name,
+      // image: payload.picture,
+    };
+  }
+  async loginGoogle(id_token: string) {
+    const googleData = await this.verifyGoogleToken(id_token);
+
+    const user = await this.usersService.findOrCreateGoogleUser(googleData);
+
     const payload = { email: user.email, _id: user._id, role: user.role };
     return {
       user: {

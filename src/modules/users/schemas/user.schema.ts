@@ -67,6 +67,11 @@ export class User {
   accountType: AccountType;
 
   @Prop({
+    default: null,
+  })
+  googleId?: string;
+
+  @Prop({
     default: false,
   })
   isActive: boolean;

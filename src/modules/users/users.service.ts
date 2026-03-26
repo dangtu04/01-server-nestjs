@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordAuthDto } from '@/auth/dto/update-auth.dto';
 import { ConfigService } from '@nestjs/config';
+import { AccountType } from '@/enum/user.enum';
 
 @Injectable()
 export class UsersService {
@@ -302,5 +303,34 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
     return updatedUser;
+  }
+
+  async findOrCreateGoogleUser(data: {
+    email: string;
+    googleId: string;
+    name?: string;
+  }) {
+    const { email, googleId, name } = data;
+
+    let user = await this.userModel.findOne({ googleId });
+
+    if (user) return user;
+
+    user = await this.userModel.findOne({ email });
+
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId;
+      }
+      await user.save();
+      return user;
+    }
+
+    return this.userModel.create({
+      email,
+      googleId,
+      name,
+      accountType: AccountType.GOOGLE,
+    });
   }
 }
