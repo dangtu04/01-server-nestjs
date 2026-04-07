@@ -14,15 +14,14 @@ import { join } from 'path';
         transport: {
           host: 'smtp.gmail.com',
           port: 587,
-          // ignoreTLS: true,
           secure: false,
           auth: {
             user: configService.get<string>('MAIL_USER'),
             pass: configService.get<string>('MAIL_PASSWORD'),
           },
-        },
-        tls: {
-          rejectUnauthorized: false,
+          tls: {
+            rejectUnauthorized: false,
+          },
         },
         defaults: {
           from: `"No Reply" <${configService.get<string>('MAIL_USER')}>`,
