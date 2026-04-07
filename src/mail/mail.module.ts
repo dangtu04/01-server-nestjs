@@ -22,6 +22,8 @@ import { join } from 'path';
           tls: {
             rejectUnauthorized: false,
           },
+          connectionTimeout: 10000, // 10 seconds
+          socketTimeout: 10000, // 10 seconds
         },
         defaults: {
           from: `"No Reply" <${configService.get<string>('MAIL_USER')}>`,
